@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <%- include("./partials/head.ejs") %>
+  <body class="admin-container">
+    <div class="left">
+      <div id="errors"></div>
+
+      <h3>Create a page</h3>
+      <form id="form" action="/admin" method="POST">
+        <label for="title">Title</label>
+        <input id="title" type="text" name="title" placeholder="Title" />
+
+        <label for="meta_desc">Meta Description</label>
+        <input
+          id="meta_desc"
+          type="text"
+          name="meta_desc"
+          placeholder="Meta description"
+        />
+
+        <label for="content">Content</label>
+        <input id="content" type="text" name="content" placeholder="Content" />
+
+        <label for="url_slug">URL Slug</label>
+        <input
+          id="url_slug"
+          type="text"
+          name="url_slug"
+          placeholder="URL slug"
+        />
+
+        <button>Create</button>
+      </form>
+    </div>
+
+    <div class="right">
+      <h3>Pages</h3>
+      <ul id="items">
+        <% pages.forEach(page => { %>
+        <li data-slug="<%= page.url_slug %>">
+          <a href="<%= page.url_slug %>"> <%= page.title %> </a>
+          <button class="delete-btn">Delete</button>
+        </li>
+        <% }) %>
+      </ul>
+    </div>
+
+    <script>
+      const form = document.getElementById("form");
+      const ul = document.getElementById("items");
+      const errorDiv = document.getElementById("errors");
+      const deleteBtns = document.querySelectorAll(".delete-btn");
+
+      async function handleDelete(event) {
+        const url_slug = event.target.parentNode.getAttribute("data-slug");
+        // console.log(slug);
+        try {
+          const response = await fetch(
+            `http://localhost:3000/admin/${url_slug}`,
+            {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          if (response.ok) {
+            const li = event.target.parentElement;
+            li.parentElement.removeChild(li);
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      function createPage(title, slug) {
+        const li = document.createElement("li");
+        const a = document.createElement("a");
+        const button = document.createElement("button");
+
+        a.setAttribute("href", slug);
+        a.innerHTML = title;
+        button.innerHTML = "Delete";
+        button.addEventListener("click", (e) => handleDelete(e));
+
+        li.setAttribute("data-slug", slug);
+        li.appendChild(a);
+        li.appendChild(button);
+
+        ul.appendChild(li);
+      }
+
+      deleteBtns.forEach((button) => {
+        button.addEventListener("click", (event) => handleDelete(event));
+      });
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const title = document.getElementById("title").value.trim();
+        const meta_desc = document.getElementById("meta_desc").value.trim();
+        const content = document.getElementById("content").value.trim();
+        const url_slug = document.getElementById("url_slug").value.trim();
+
+        try {
+          const response = await fetch("http://localhost:3000/admin", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ title, meta_desc, content, url_slug }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            const p = document.createElement("p");
+            if (errorDiv.firstChild) {
+              errorDiv.firstChild.remove();
+            }
+
+            if (errorData.emptyFields) {
+              p.innerHTML = `${errorData.error} -> ${errorData.emptyFields}`;
+            } else {
+              p.innerHTML = `${errorData.error}`;
+            }
+            errorDiv.appendChild(p);
+            throw new Error(errorData.error);
+          } else {
+            if (errorDiv.firstChild) {
+              errorDiv.firstChild.remove();
+            }
+            const { title, url_slug } = await response.json();
+            createPage(title, url_slug);
+            form.reset();
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      });
+    </script>
+  </body>
+</html>

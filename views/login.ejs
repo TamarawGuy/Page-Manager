@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <%- include('./partials/head.ejs') %>
+  <body>
+    <form id="login-form" method="post">
+      <label for="password">Password:</label>
+      <input id="pass" type="password" name="password" />
+      <button>Enter</button>
+    </form>
+    <div id="errors"></div>
+
+    <script>
+      const form = document.getElementById("login-form");
+      const errorsDiv = document.getElementById("errors");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const pass = document.getElementById("pass").value;
+
+        try {
+          const response = await fetch("http://localhost:3000/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ pass }),
+          });
+
+          if (!response.ok) {
+            if (errorsDiv.firstChild) {
+              errorsDiv.firstChild.remove();
+            }
+            const errorsData = await response.json();
+            const p = document.createElement("p");
+            p.innerHTML = `${errorsData.error}`;
+            errorsDiv.appendChild(p);
+          } else {
+            window.location.href = "/admin";
+          }
+        } catch (error) {
+          throw new Error(error);
+        }
+      });
+    </script>
+  </body>
+</html>
