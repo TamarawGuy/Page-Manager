@@ -18,13 +18,16 @@
         const pass = document.getElementById("pass").value;
 
         try {
-          const response = await fetch("http://localhost:3000/login", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ pass }),
-          });
+          const response = await fetch(
+            "https://" + window.location.host + "/login",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ pass }),
+            }
+          );
 
           if (!response.ok) {
             if (errorsDiv.firstChild) {
